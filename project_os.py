@@ -11,9 +11,33 @@ Execução:
 
 import os
 import re
+import sys
+import traceback
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 from datetime import datetime
+
+# ─────────────────────────────────────────────
+# Log de erros — grava erro_log.txt na pasta do exe
+# Útil para diagnosticar falhas ao rodar como .exe
+# ─────────────────────────────────────────────
+def _pasta_exe():
+    """Retorna a pasta onde o executável (ou script) está."""
+    if hasattr(sys, "_MEIPASS"):
+        return os.path.dirname(sys.executable)
+    return os.path.dirname(os.path.abspath(__file__))
+
+_log_path = os.path.join(_pasta_exe(), "erro_log.txt")
+
+def _salvar_erro(tipo, valor, tb):
+    try:
+        with open(_log_path, "w", encoding="utf-8") as f:
+            traceback.print_exception(tipo, valor, tb, file=f)
+    except Exception:
+        pass
+    sys.__excepthook__(tipo, valor, tb)
+
+sys.excepthook = _salvar_erro
 
 from docx import Document
 from docx.shared import Pt, Cm, RGBColor
@@ -50,10 +74,19 @@ FONT_BTN      = ("Segoe UI", 11, "bold")
 FONT_SMALL    = ("Segoe UI", 8)
 
 
+def _resource_path(filename):
+    """Resolve caminhos dentro do bundle PyInstaller ou no diretório normal."""
+    if hasattr(sys, "_MEIPASS"):
+        return os.path.join(sys._MEIPASS, filename)
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), filename)
+
 def _localizar_logo():
-    base = os.path.dirname(os.path.abspath(__file__))
-    for pasta in (base, os.getcwd()):
-        p = os.path.join(pasta, LOGO_FILENAME)
+    candidatos = [
+        _resource_path(LOGO_FILENAME),                              # bundled / ao lado do script
+        os.path.join(os.path.dirname(sys.executable), LOGO_FILENAME),  # ao lado do .exe
+        os.path.join(os.getcwd(), LOGO_FILENAME),                   # diretório de trabalho
+    ]
+    for p in candidatos:
         if os.path.isfile(p):
             return p
     return None
