@@ -149,11 +149,11 @@ def gerar_os(dados, destino):
         r = p_logo.add_run("RPM ELETRODIESEL"); r.bold=True; r.font.size=Pt(14)
         r.font.color.rgb = RGBColor(0x17,0x23,0x3F)
     c_tit = tbl_hdr.cell(0,1)
-    _bg(c_tit,COR_ESCURA); _bordas(c_tit,cor="CCCCCC")
+    _bg(c_tit,"FFFFFF"); _bordas(c_tit,cor="CCCCCC")
     c_tit.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
     p_tit = c_tit.paragraphs[0]; p_tit.alignment = WD_ALIGN_PARAGRAPH.CENTER
     r1 = p_tit.add_run("ORDEM DE SERVICO")
-    r1.bold=True; r1.font.size=Pt(15); r1.font.color.rgb=RGBColor(0xFF,0xFF,0xFF)
+    r1.bold=True; r1.font.size=Pt(15); r1.font.color.rgb=RGBColor(0x00,0x00,0x00)
     c_end = tbl_hdr.cell(1,0); c_end.merge(tbl_hdr.cell(1,1))
     _bg(c_end,COR_MEDIA); _bordas(c_end,cor="FFFFFF")
     _texto_celula(c_end, EMPRESA_ENDE, size=9,
@@ -401,7 +401,7 @@ class AppOS:
         c.columnconfigure(1, weight=1)
         c.columnconfigure(3, weight=1)
         self.v_os_num, _ = _campo(c, "Número da O.S.", 0, col=0, largura=20)
-        self.v_data,   _ = _campo(c, "Data (DD-MM-AAAA)", 0, col=2, largura=16)
+        self.v_data,   _ = _campo(c, "Data (DD/MM/AAAA)", 0, col=2, largura=16)
 
     def _card_cliente(self, parent):
         _secao(parent, "  DADOS DO CLIENTE / VEÍCULO")
@@ -539,14 +539,14 @@ class AppOS:
 
         data = self.v_data.get().strip()
         if not data:
-            data = datetime.today().strftime("%d-%m-%Y")
+            data = datetime.today().strftime("%d/%m/%Y")
         else:
-            padrao = re.compile(r"^\d{2}-\d{2}-\d{4}$")
+            padrao = re.compile(r"^\d{2}/\d{2}/\d{4}$")
             if not padrao.match(data):
-                erros.append("Data (formato inválido — use DD-MM-AAAA)")
+                erros.append("Data (formato inválido — use DD/MM/AAAA)")
             else:
                 try:
-                    d,m,a = data.split("-")
+                    d,m,a = data.split("/")
                     datetime(int(a),int(m),int(d))
                 except ValueError:
                     erros.append("Data (data inexistente)")
@@ -605,8 +605,9 @@ class AppOS:
             return
 
         # ── Escolha do destino ──
-        nome_sugerido = "OS_{}_{}.docx".format(
-            os_num, data.replace("-",""))
+        cliente_safe = re.sub(r'[\\/:*?"<>|]', "", cliente).strip()
+        nome_sugerido = "OS_{}_{}_{}.docx".format(
+            os_num, cliente_safe, data.replace("/",""))
         destino = filedialog.asksaveasfilename(
             title="Salvar Ordem de Serviço",
             initialfile=nome_sugerido,
