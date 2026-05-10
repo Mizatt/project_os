@@ -6,13 +6,14 @@ Instalação:
     pip install streamlit python-docx
 
 Execução local:
-    streamlit run app.py
+    streamlit run project_os.py
 
 Deploy:
     1. Suba este arquivo + LOGO_Horizontal_cor.png para o GitHub
     2. Acesse share.streamlit.io e conecte o repositório
 """
 
+import base64
 import io
 import os
 import re
@@ -306,11 +307,32 @@ st.set_page_config(
     layout="centered",
 )
 
-# Cabeçalho visual
-st.markdown("""
-<div style="background:#17233F;padding:18px 24px;border-radius:8px;margin-bottom:24px">
-  <span style="color:white;font-size:22px;font-weight:700">RPM ELETRODIESEL</span><br>
-  <span style="color:#8AABCF;font-size:13px">Gerador de Ordem de Serviço</span>
+# Cabeçalho visual com logo
+def _logo_base64():
+    caminho = os.path.join(os.path.dirname(os.path.abspath(__file__)), LOGO_FILENAME)
+    if os.path.isfile(caminho):
+        with open(caminho, "rb") as f:
+            return base64.b64encode(f.read()).decode()
+    return None
+
+_logo_b64 = _logo_base64()
+_logo_tag = (
+    f'<img src="data:image/png;base64,{_logo_b64}" style="height:72px;object-fit:contain;">' 
+    if _logo_b64 else
+    '<span style="color:#8AABCF;font-size:13px">RPM ELETRODIESEL</span>'
+)
+
+st.markdown(f"""
+<div style="background:#17233F;padding:16px 24px;border-radius:8px;
+            margin-bottom:24px;display:flex;align-items:center;
+            justify-content:space-between;gap:16px;">
+  <div>
+    <span style="color:white;font-size:22px;font-weight:700">RPM ELETRODIESEL</span><br>
+    <span style="color:#8AABCF;font-size:13px">Gerador de Ordem de Serviço</span>
+  </div>
+  <div style="background:white;border-radius:6px;padding:8px 16px;">
+    {_logo_tag}
+  </div>
 </div>
 """, unsafe_allow_html=True)
 
