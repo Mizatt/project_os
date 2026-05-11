@@ -6,7 +6,7 @@ Instalação:
     pip install streamlit python-docx
 
 Execução local:
-    streamlit run project_os.py
+    streamlit run app.py
 
 Deploy:
     1. Suba este arquivo + LOGO_Horizontal_cor.png para o GitHub
@@ -37,6 +37,15 @@ COR_ESCURA    = "17233F"
 COR_MEDIA     = "4A90E2"
 COR_LINHA_PAR = "EBEBEB"
 
+
+# ─────────────────────────────────────────────
+# Estados brasileiros
+# ─────────────────────────────────────────────
+ESTADOS_BR = [
+    "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO",
+    "MA", "MT", "MS", "MG", "PA", "PB", "PR", "PE", "PI",
+    "RJ", "RN", "RS", "RO", "RR", "SC", "SP", "SE", "TO",
+]
 
 # ─────────────────────────────────────────────
 # Helpers docx
@@ -285,17 +294,6 @@ def gerar_os_bytes(dados: dict) -> bytes:
 # Validações
 # ─────────────────────────────────────────────
 
-def _validar_data(val: str) -> str | None:
-    """Retorna mensagem de erro ou None se válida."""
-    if not re.match(r"^\d{2}/\d{2}/\d{4}$", val):
-        return "Use o formato DD/MM/AAAA (ex.: 25/02/2026)."
-    try:
-        d, m, a = val.split("/")
-        datetime(int(a), int(m), int(d))
-    except ValueError:
-        return "Data inexistente. Verifique dia, mês e ano."
-    return None
-
 
 # ─────────────────────────────────────────────
 # Interface Streamlit
@@ -342,11 +340,12 @@ col1, col2 = st.columns(2)
 with col1:
     os_numero = st.text_input("Número da O.S. *", placeholder="ex.: 6897")
 with col2:
-    data_os = st.text_input(
+    data_os_picker = st.date_input(
         "Data *",
-        placeholder="DD/MM/AAAA",
-        value=datetime.today().strftime("%d/%m/%Y"),
+        value=datetime.today(),
+        format="DD/MM/YYYY",
     )
+    data_os = data_os_picker.strftime("%d/%m/%Y")
 
 # ── Seção: Cliente ────────────────────────────
 st.subheader("👤 Dados do Cliente / Veículo")
@@ -354,7 +353,11 @@ col1, col2 = st.columns(2)
 with col1:
     cliente = st.text_input("Cliente *", placeholder="Nome do cliente")
 with col2:
-    cidade  = st.text_input("Cidade *",  placeholder="ex.: Sorocaba - SP")
+    col_cid, col_uf = st.columns([3, 1])
+    with col_cid:
+        cidade = st.text_input("Cidade *", placeholder="ex.: Sorocaba")
+    with col_uf:
+        estado = st.selectbox("UF *", options=ESTADOS_BR, index=ESTADOS_BR.index("SP"))
 
 col3, col4 = st.columns(2)
 with col3:
@@ -438,12 +441,9 @@ if st.button("⚙️  GERAR ORDEM DE SERVIÇO", type="primary", use_container_wi
     if not os_numero.strip():
         erros.append("Número da O.S.")
 
-    erro_data = _validar_data(data_os.strip())
-    if erro_data:
-        erros.append("Data — " + erro_data)
-
     if not cliente.strip():  erros.append("Cliente")
     if not cidade.strip():   erros.append("Cidade")
+    if not estado:   erros.append("Estado")
     if not motor.strip():    erros.append("Motor")
     if not veiculo.strip():  erros.append("Veículo")
 
@@ -487,7 +487,7 @@ if st.button("⚙️  GERAR ORDEM DE SERVIÇO", type="primary", use_container_wi
             "os_numero":   os_numero.strip(),
             "data_os":     data_os.strip(),
             "cliente":     cliente.strip(),
-            "cidade":      cidade.strip(),
+            "cidade":      cidade.strip() + "/" + estado.strip(),
             "motor":       motor.strip(),
             "veiculo":     veiculo.strip(),
             "placa":       placa.strip().upper(),
